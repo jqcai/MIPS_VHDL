@@ -41,7 +41,7 @@ ALUControl: out std_logic_vector(2 downto 0);
 ALUSrc: out std_logic;
 RegDst: out std_logic;
 RegWrite: out std_logic:='0'
- );
+);
 end ALU_control;
 
 architecture Behavioral of ALU_control is
@@ -63,7 +63,6 @@ with Op select
 Branch<='1' when "001001",
         '1' when "001010",
         '1' when "001011",
---        '1' when "001100",
         '0' when others;
 with Op select
 ALUControl_1<="000" when "000001",

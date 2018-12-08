@@ -47,6 +47,7 @@ entity RF is
         rd_data2 : out std_logic_vector(31 downto 0);
        
 --        clk
+        clr : in std_logic;
         clk    :     IN STD_LOGIC);
 end RF;
 
@@ -61,14 +62,15 @@ signal reg:reg_addr:=(others=>x"00000000");
 --signal rd_data2_temp:std_logic_vector(31 downto 0);
 begin
 
-process(clk,wrt_en)
+process(clk, wrt_en, clr)
 begin
 --if falling_edge(clk) then
 --    last_wrt_data<=wrt_data;
 --    last_wrt_en<=wrt_en;
 --    last_wrt_reg<=wrt_reg;
 --end if;
-if rising_edge(clk) then
+if clr = '1' then reg <= (others => x"00000000");
+elsif rising_edge(clk) then
 --if clk'event then
     
    	if wrt_en = '1' then 
@@ -78,22 +80,8 @@ end if;
 
 end process;
 
-rd_data1 <= reg( to_integer(unsigned(rd_reg1)));
+rd_data1 <= reg(to_integer(unsigned(rd_reg1)));
 rd_data2 <= reg(to_integer(unsigned(rd_reg2)));
-
---with last_wrt_reg select
---rd_data1_temp<= last_wrt_data when rd_reg1,
---                reg(to_integer(unsigned(rd_reg1))) when others;
---with last_wrt_en select
---rd_data1<=rd_data1_temp when '1',
---          reg(to_integer(unsigned(rd_reg1))) when others;
-          
---with last_wrt_reg select
---rd_data2_temp<= last_wrt_data when rd_reg2,
---                reg(to_integer(unsigned(rd_reg2))) when others;
---with last_wrt_en select
---rd_data2<=rd_data2_temp when '1',
---          reg(to_integer(unsigned(rd_reg2))) when others;
     
 
 end Behavioral;

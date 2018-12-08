@@ -34,9 +34,10 @@ use IEEE.std_logic_unsigned.all;
 entity Top_func is
     port(
         clk: in std_logic;
-        SSEG_CA: out  STD_LOGIC_VECTOR (7 downto 0);
+        SSEG_CA: out STD_LOGIC_VECTOR (7 downto 0);
         SW: in std_logic_vector(7 downto 0);
-        AN: out  STD_LOGIC_VECTOR (7 downto 0)
+        AN: out STD_LOGIC_VECTOR (7 downto 0);
+        clr : in std_logic
     );
 end Top_func;
 
@@ -193,13 +194,15 @@ with jump select
 real_new_pc<="0000" & instr(25 downto 0) & "00" when '1',
               pcplus4 when others;
 --process(btnc)
-process(clk)
+process(clk, clr)
 begin
---if rising_edge(btnc) then
-if rising_edge(clk) then
-pc <= pc_next;
-end if;
+    if clr ='1' then
+        pc <= x"00000000";
+    elsif rising_edge(clk) then
+        pc <= pc_next;
+    end if;
 end process;
+
 PCSrc <= Branch and Zero;
 Instruction_Mem: entity work.instruction_memory
     port map
@@ -223,7 +226,7 @@ Register_File: entity work.RF
     wrt_en => RegWrite, 
     rd_data1 => SrcA, 
     rd_data2 => WriteData, 
---    clk => btnc);
+    clr => clr,
     clk => clk);    
 Write_Mux: entity work.WrtMux
     port map(
@@ -265,7 +268,8 @@ Data_Mem_port_map: entity work.DATA_MEM
         MemtoReg => MemtoReg,
         ALUResult => ALUResult,
         op => op,
-        RD => ReadData
+        RD => ReadData,
+        clr => clr
     );
 ALU_Control_port_map: entity work.ALU_control 
         Port map(
