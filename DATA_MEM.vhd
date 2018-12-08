@@ -22,6 +22,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.all;
+use IEEE.std_logic_unsigned.all;
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 --use IEEE.NUMERIC_STD.ALL;
@@ -34,8 +35,12 @@ use IEEE.numeric_std.all;
 entity DATA_MEM is
     Port ( 
             clk: in std_logic;
-            clr: in std_logic;      
-            sw: in std_logic_vector(7 downto 0);
+            clr: in std_logic;   
+            index:in std_logic_vector(7 downto 0);
+            value:in std_logic_vector(7 downto 0);
+                      
+            btnU: in std_logic; --input button   
+--            sw: in std_logic_vector(7 downto 0);
             WD: in std_logic_vector(31 downto 0);
             WE: in std_logic;
             MemtoReg: in std_logic;
@@ -184,10 +189,10 @@ constant ram_init : data_mem := (
                     118 => x"8f",
                     119 => x"ab",
                     
-                    136 => x"90",
-                    137 => x"12",
-                    138 => x"34",
-                    139 => x"56",
+--                    136 => x"90",
+--                    137 => x"12",
+--                    138 => x"34",
+--                    139 => x"56",
                     140 => x"12",
                     141 => x"34",
                     142 => x"56",
@@ -205,12 +210,26 @@ signal RAM: data_mem := ram_init;
 
 begin
     ram_addr <= ALUResult(7 downto 0);
-    op <= ram(to_integer(unsigned(sw)));
-    process(clk, ALUResult, clr)
+--    op <= ram(to_integer(unsigned(sw)));
+    
+--    process(btnU)
+--        begin
+--            if(btnU = '1') Then
+--                if(index < x"8d") Then
+--                    ram(to_integer(unsigned(index))) <= sw(7 downto 0);
+--                    index <= index + '1';
+--                end if;
+--           end if;
+--    end process;
+    
+    process(clk, ALUResult, clr, btnU)
         begin
             if clr = '1' then
                 RAM<= ram_init;
             elsif(rising_edge(clk)) then
+                if btnU = '1' then
+                    ram(to_integer(unsigned(index))) <= value;
+                end if;
                 if(WE = '1') then
                     ram(to_integer(unsigned(ram_addr))) <= WD(7 downto 0);
                 end if;

@@ -34,8 +34,9 @@ use IEEE.std_logic_unsigned.all;
 entity Top_func is
     port(
         clk: in std_logic;
+        btnU: in std_logic;
         SSEG_CA: out STD_LOGIC_VECTOR (7 downto 0);
-        SW: in std_logic_vector(7 downto 0);
+        SW: in std_logic_vector(15 downto 0);
         AN: out STD_LOGIC_VECTOR (7 downto 0);
         clr : in std_logic
     );
@@ -73,8 +74,12 @@ end component;
 component DATA_MEM 
     Port ( 
             clk: in std_logic;  
+            btnU: in std_logic;
+            clr: in std_logic;   
+            index:in std_logic_vector(7 downto 0);
+            value:in std_logic_vector(7 downto 0);
             WD: in std_logic_vector(31 downto 0);
-            sw: in std_logic_vector(7 downto 0);
+--            sw: in std_logic_vector(7 downto 0);
             WE: in std_logic;
             MemtoReg: in std_logic;
            ALUResult:in std_logic_vector(31 downto 0);
@@ -180,7 +185,8 @@ signal jump: std_logic;
 signal real_new_pc: std_logic_vector(31 downto 0);
 signal result1: std_logic_vector(31 downto 0):= x"00000000";
 signal result2: std_logic_vector(31 downto 0):= x"00000000";
-
+signal index: std_logic_vector(7 downto 0);
+signal value: std_logic_vector(7 downto 0);
 
 
 begin
@@ -204,6 +210,15 @@ begin
 end process;
 
 PCSrc <= Branch and Zero;
+
+process(btnU)
+    begin
+        if btnU = '1' Then
+            index <= sw(7 downto 0);
+            value <= sw(15 downto 8);
+        end if;
+end process;
+
 Instruction_Mem: entity work.instruction_memory
     port map
     (
@@ -261,15 +276,18 @@ Sign_Extend: entity work.SignExtend
     
 Data_Mem_port_map: entity work.DATA_MEM
     port map(
-        sw => SW,
+--        sw => SW,
+        btnU => btnU,
+        clr => clr,
+        index => index,
+        value => value,
         clk => clk,
         WD =>WriteData,
         WE => MemWrite,
         MemtoReg => MemtoReg,
         ALUResult => ALUResult,
         op => op,
-        RD => ReadData,
-        clr => clr
+        RD => ReadData
     );
 ALU_Control_port_map: entity work.ALU_control 
         Port map(
