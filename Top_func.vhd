@@ -34,11 +34,12 @@ use IEEE.std_logic_unsigned.all;
 entity Top_func is
     port(
         clk: in std_logic;
-        btnU: in std_logic;
-        SSEG_CA: out STD_LOGIC_VECTOR (7 downto 0);
+        btnU,btnR,btnL,btnD: in std_logic;
+        SSEG_CA: out STD_LOGIC_VECTOR (7 downto 0):="00000000";
         SW: in std_logic_vector(15 downto 0);
-        AN: out STD_LOGIC_VECTOR (7 downto 0);
-        clr : in std_logic
+        AN: out STD_LOGIC_VECTOR (7 downto 0):="00000000";
+        led: out std_logic:='0';
+        btnC : in std_logic
     );
 end Top_func;
 
@@ -57,8 +58,8 @@ component ALU_control
         ALUControl: out std_logic_vector(2 downto 0);
         ALUSrc: out std_logic;
         RegDst: out std_logic;
-        RegWrite: out std_logic
-
+        RegWrite: out std_logic;
+        ifHalt: out std_logic
  );
 end component;
 
@@ -73,18 +74,18 @@ end component;
 
 component DATA_MEM 
     Port ( 
-            clk: in std_logic;  
-            btnU: in std_logic;
+            clk: in std_logic;
             clr: in std_logic;   
             index:in std_logic_vector(7 downto 0);
             value:in std_logic_vector(7 downto 0);
-            WD: in std_logic_vector(31 downto 0);
+            btnU: in std_logic; --input button   
 --            sw: in std_logic_vector(7 downto 0);
+            WD: in std_logic_vector(31 downto 0);
             WE: in std_logic;
             MemtoReg: in std_logic;
-           ALUResult:in std_logic_vector(31 downto 0);
-           op: out std_logic_vector(7 downto 0);
-           RD: out std_logic_vector(31 downto 0)
+            ALUResult:in std_logic_vector(31 downto 0);
+            op: out std_logic_vector(7 downto 0);
+            RD: out std_logic_vector(31 downto 0)
     );
 end component;
 
@@ -109,6 +110,7 @@ component  RF
         rd_data2 : out std_logic_vector(31 downto 0);
        
 --        clk
+        clr: in std_logic;
         clk    :     IN STD_LOGIC);
 end component;
 
@@ -130,6 +132,7 @@ end component;
 
 component instruction_memory 
 	PORT (
+	   configuration_mode: in std_logic_vector(1 downto 0);
 		readAddress : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 		instruction : OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
 	);
@@ -137,9 +140,12 @@ end component;
 
 component mux 
     Port ( 
+        pc: in std_logic_vector(31 downto 0);
+        ifHalt :in std_logic;
         mux_in1 : in std_logic_vector(31 downto 0);
         mux_in2 : in std_logic_vector(31 downto 0);
         mux_sel : in std_logic;
+        btnL,btnR,btnD : in std_logic;
         mux_out : out std_logic_vector(31 downto 0));
 end component;
 
@@ -187,10 +193,43 @@ signal result1: std_logic_vector(31 downto 0):= x"00000000";
 signal result2: std_logic_vector(31 downto 0):= x"00000000";
 signal index: std_logic_vector(7 downto 0);
 signal value: std_logic_vector(7 downto 0);
+signal configuration_mode: std_logic_vector(1 downto 0):="00";
+signal ifHalt: std_logic:='0';
+signal runningFlag: std_logic:='0';
+signal interupt: std_logic:='0';
+signal clr: std_logic:= '0';
+
 
 
 begin
+--TODO
+clr <= interupt or btnC;
 
+
+
+process(btnL,btnD,btnR, clr,ifHalt)
+begin
+    if clr = '1' Then 
+        runningFlag <= '0';
+        configuration_mode <= "00"; 
+    elsif ifHalt='0' and runningFlag = '1' Then
+        interupt <= '1';    
+    elsif btnL='1' then
+        runningFlag <= '1';
+        configuration_mode<="01";
+    elsIf btnD='1' then
+        runningFlag <= '1';
+        configuration_mode<="10";
+    elsif btnR='1' then
+        runningFlag <= '1';
+        configuration_mode<="11";
+    elsif ifHalt = '1' Then
+        runningFlag <= '0'; 
+    end if;
+end process;
+with configuration_mode select
+ led<='1' when "00",
+       '0' when others;
 
 
 with instr(31 downto 26) select
@@ -219,9 +258,12 @@ process(btnU)
         end if;
 end process;
 
+
+
 Instruction_Mem: entity work.instruction_memory
     port map
     (
+    configuration_mode=>configuration_mode,
     readAddress => pc,
     instruction => instr 
     );
@@ -298,14 +340,20 @@ ALU_Control_port_map: entity work.ALU_control
             ALUControl,
             ALUSrc,
             RegDst,
-            RegWrite);
+            RegWrite,
+            ifHalt);
             
 mux_port_map: entity work.mux
     port map(
-            PCBranch_sig,
-            real_new_pc, 
-            PCSrc,
-            PC_next
+            pc => pc,
+            ifHalt => ifHalt,
+            mux_in1 => PCBranch_sig,
+            mux_in2 =>  real_new_pc, 
+            mux_sel =>  PCSrc,
+            btnL => btnL,
+            btnR => btnR,
+            btnD => btnD,
+            mux_out => PC_next
     );
 
 mux_DM_map:  entity work.mux_DM

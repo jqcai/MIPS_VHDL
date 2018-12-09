@@ -38,15 +38,14 @@ entity DATA_MEM is
             clr: in std_logic;   
             index:in std_logic_vector(7 downto 0);
             value:in std_logic_vector(7 downto 0);
-                      
-            btnU: in std_logic; --input button   
---            sw: in std_logic_vector(7 downto 0);
+--            index_out: in std_logic_vector(7 downto 0);
+            btnU: in std_logic; --input button
             WD: in std_logic_vector(31 downto 0);
             WE: in std_logic;
             MemtoReg: in std_logic;
             ALUResult:in std_logic_vector(31 downto 0);
             op: out std_logic_vector(7 downto 0);
-            RD: out std_logic_vector(31 downto 0)                                
+            RD: out std_logic_vector(31 downto 0)                            
     );
 end DATA_MEM;
 
@@ -188,11 +187,18 @@ constant ram_init : data_mem := (
                     117 => x"83",
                     118 => x"8f",
                     119 => x"ab",
-                    
---                    136 => x"90",
---                    137 => x"12",
---                    138 => x"34",
---                    139 => x"56",
+                    128 => x"17",
+                    129 => x"00",
+                    130 => x"38",
+                    131 => x"00",
+                    132 => x"00",
+                    133 => x"38",
+                    134 => x"00",
+                    135 => x"66",
+                    136 => x"90",
+                    137 => x"12",
+                    138 => x"34",
+                    139 => x"56",
                     140 => x"12",
                     141 => x"34",
                     142 => x"56",
@@ -210,17 +216,7 @@ signal RAM: data_mem := ram_init;
 
 begin
     ram_addr <= ALUResult(7 downto 0);
---    op <= ram(to_integer(unsigned(sw)));
-    
---    process(btnU)
---        begin
---            if(btnU = '1') Then
---                if(index < x"8d") Then
---                    ram(to_integer(unsigned(index))) <= sw(7 downto 0);
---                    index <= index + '1';
---                end if;
---           end if;
---    end process;
+    op <= ram(to_integer(unsigned(index(7 downto 0))));
     
     process(clk, ALUResult, clr, btnU)
         begin

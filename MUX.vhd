@@ -32,17 +32,32 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity mux is
-
     Port ( 
+        pc: in std_logic_vector(31 downto 0);
+        ifHalt : in std_logic;
         mux_in1 : in std_logic_vector(31 downto 0);
         mux_in2 : in std_logic_vector(31 downto 0);
         mux_sel : in std_logic;
-        mux_out : out std_logic_vector(31 downto 0));
+        btnL,btnR,btnD : in std_logic;
+        mux_out : out std_logic_vector(31 downto 0)
+        );
 end mux;
 
 architecture Behavioral of mux is
 
 begin
-    mux_out <= mux_in1 when mux_sel = '1' else mux_in2;
-
+    process(ifHalt,btnL,btnR,btnD)
+        begin
+            if(ifHalt = '1') Then
+                mux_out <= pc;
+            elsif(mux_sel = '1') Then
+                mux_out <= mux_in1;
+            else 
+                mux_out <= mux_in2;
+            end if;
+         if(btnL = '1' or btnR = '1' or btnD = '1') Then
+            mux_out <= X"00000000";
+         end if;
+    end process;
+--    mux_out <= mux_in1 when mux_sel = '1' else mux_in2;
 end Behavioral;

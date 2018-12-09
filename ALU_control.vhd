@@ -40,7 +40,8 @@ Branch: out std_logic;
 ALUControl: out std_logic_vector(2 downto 0);
 ALUSrc: out std_logic;
 RegDst: out std_logic;
-RegWrite: out std_logic:='0'
+RegWrite: out std_logic:='0';
+ifHalt: out std_logic:='0'
 );
 end ALU_control;
 
@@ -53,6 +54,9 @@ begin
 Op<=instr(31 downto 26);
 Funct<=instr(5 downto 0);
 
+with Op select 
+ifHalt <= '1' when "111111",
+          '0' when others;
 with Op select
 MemtoReg<='1' when "000111",
           '0' when others;
