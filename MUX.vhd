@@ -46,7 +46,7 @@ end mux;
 architecture Behavioral of mux is
 
 begin
-    process(ifHalt,btnL,btnR,btnD)
+    process(ifHalt,btnL,btnR,btnD,mux_sel,mux_in1,mux_in2)
         begin
             if(ifHalt = '1') Then
                 mux_out <= pc;

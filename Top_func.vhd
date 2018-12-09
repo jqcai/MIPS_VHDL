@@ -198,35 +198,93 @@ signal ifHalt: std_logic:='0';
 signal runningFlag: std_logic:='0';
 signal interupt: std_logic:='0';
 signal clr: std_logic:= '0';
-
-
+TYPE StateType IS( initial_state, pressing_state, running_state, interupt_state);
+signal state : StateType;
 
 begin
 --TODO
 clr <= interupt or btnC;
 
-
-
-process(btnL,btnD,btnR, clr,ifHalt)
-begin
-    if clr = '1' Then 
-        runningFlag <= '0';
-        configuration_mode <= "00"; 
-    elsif ifHalt='0' and runningFlag = '1' Then
-        interupt <= '1';    
-    elsif btnL='1' then
-        runningFlag <= '1';
-        configuration_mode<="01";
-    elsIf btnD='1' then
-        runningFlag <= '1';
-        configuration_mode<="10";
-    elsif btnR='1' then
-        runningFlag <= '1';
-        configuration_mode<="11";
-    elsif ifHalt = '1' Then
-        runningFlag <= '0'; 
-    end if;
+process(clk,btnL,btnD,btnR,btnC,ifHalt)
+    begin
+        if btnC = '1'  then
+            state <= initial_state;
+        ELSIF(clk'EVENT AND clk='1') THEN
+            case state IS
+                When initial_state => 
+                    interupt <= '0';
+                    if  btnL='1' Then
+                        state <= pressing_state;
+                        configuration_mode<="01";                
+                    elsif btnR = '1' Then
+                        state <= pressing_state;
+                        configuration_mode<="11";
+                    elsif btnD = '1' Then 
+                        state <= pressing_state; 
+                        configuration_mode<="10";
+                    End if;
+                When pressing_state =>
+                    interupt <= '0';
+                    if btnL = '0' and btnR = '0' and btnD = '0' then
+                        state <= running_state;
+                    end if;
+                When running_state => 
+                    interupt <= '0';
+                    if ifHalt = '1' then state <= initial_state; 
+                    elsif (btnL = '1' or btnR = '1' or btnD = '1') Then state <= interupt_state;
+                    End if;
+                When interupt_state => 
+                    interupt<='1';
+                    state <= initial_state;
+                    configuration_mode<="00";
+            end case;
+        end if;
 end process;
+
+
+--process(ifHalt)
+--begin
+--     if falling_edge(ifHalt) and runningFlag = '1'Then
+--        runningFlag <= '0';
+--        configuration_mode <= "00";
+--    end if;
+--end process;
+
+--process(btnL,btnD,btnR, clr)
+--begin
+--    if clr = '1' Then 
+--        runningFlag <= '0';
+--        configuration_mode <= "00";   
+--    elsif btnL='1' then
+--          runningFlag <= '1';
+--          configuration_mode<="01";
+--    elsIf btnD='1' then
+--        if runningFlag ='1'Then-- and ifHalt = '0' 
+--            if ifHalt = '0' Then
+--                interupt <= '1';
+--            else
+--                runningFlag <= '0';
+--                configuration_mode <= "00";
+--            end if;
+--        else
+--            runningFlag <= '1';
+--            configuration_mode<="10";
+--        end if;
+--    elsif btnR='1' then
+--        if runningFlag ='1'Then-- and ifHalt = '0' 
+--            if ifHalt = '0' Then
+--                interupt <= '1';
+--            else
+--                runningFlag <= '0';
+--                configuration_mode <= "00";
+--            end if;
+--        else
+--            runningFlag <= '1';
+--            configuration_mode<="11";
+--        end if;
+--    end if;
+--end process;
+
 with configuration_mode select
  led<='1' when "00",
        '0' when others;
