@@ -309,14 +309,8 @@ end process;
 
 PCSrc <= Branch and Zero;
 
---process(btnU)
---    begin
-with btnU select index <=
-    sw(7 downto 0) when '1',
-    "00000000" when '0';
-with btnU select value <=
-    sw(15 downto 8) when '1',
-    x"00" when others;
+index <= sw(7 downto 0);
+value <= sw(15 downto 8);
 
 
 
