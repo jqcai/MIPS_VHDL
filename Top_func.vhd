@@ -212,6 +212,7 @@ process(clk,btnL,btnD,btnR,btnC,ifHalt)
         ELSIF(clk'EVENT AND clk='1') THEN
             case state IS
                 When initial_state => 
+                    configuration_mode<="00";
                     interupt <= '0';
                     if  btnL='1' Then
                         state <= pressing_state;
@@ -308,13 +309,14 @@ end process;
 
 PCSrc <= Branch and Zero;
 
-process(btnU)
-    begin
-        if btnU = '1' Then
-            index <= sw(7 downto 0);
-            value <= sw(15 downto 8);
-        end if;
-end process;
+--process(btnU)
+--    begin
+with btnU select index <=
+    sw(7 downto 0) when '1',
+    "00000000" when '0';
+with btnU select value <=
+    sw(15 downto 8) when '1',
+    x"00" when others;
 
 
 
