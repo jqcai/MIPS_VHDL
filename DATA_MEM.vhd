@@ -223,7 +223,7 @@ begin
     ram_addr <= ALUResult(7 downto 0);
     op <= ram(to_integer(unsigned(index(7 downto 0))));
     
-    process(clk, ALUResult, clr, btnU)
+    process(clk, clr)
         begin
             if clr = '1' then
                 RAM<= ram_init;
