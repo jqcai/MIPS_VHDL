@@ -204,7 +204,14 @@ signal state : StateType;
 begin
 --TODO
 clr <= interupt or btnC;
-
+--process(clk, clr)
+--begin
+--    if clr ='1' then
+--        pc <= x"00000000";
+--    elsif rising_edge(clk) then
+--        pc <= pc_next;
+--    end if;
+--end process;
 process(clk,btnL,btnD,btnR,btnC,ifHalt)
     begin
         if btnC = '1'  then
@@ -212,6 +219,7 @@ process(clk,btnL,btnD,btnR,btnC,ifHalt)
         ELSIF(clk'EVENT AND clk='1') THEN
             case state IS
                 When initial_state => 
+                    pc <= x"00000000";
                     configuration_mode<="00";
                     interupt <= '0';
                     if  btnL='1' Then
@@ -230,6 +238,7 @@ process(clk,btnL,btnD,btnR,btnC,ifHalt)
                         state <= running_state;
                     end if;
                 When running_state => 
+                    pc <= pc_next;
                     interupt <= '0';
                     if ifHalt = '1' then state <= initial_state; 
                     elsif (btnL = '1' or btnR = '1' or btnD = '1') Then state <= interupt_state;
@@ -298,14 +307,7 @@ with jump select
 real_new_pc<="0000" & instr(25 downto 0) & "00" when '1',
               pcplus4 when others;
 --process(btnc)
-process(clk, clr)
-begin
-    if clr ='1' then
-        pc <= x"00000000";
-    elsif rising_edge(clk) then
-        pc <= pc_next;
-    end if;
-end process;
+
 
 PCSrc <= Branch and Zero;
 
