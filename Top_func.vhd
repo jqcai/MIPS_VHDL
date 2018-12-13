@@ -189,13 +189,13 @@ signal ReadData: std_logic_vector(31 downto 0);
 signal Result: std_logic_vector(31 downto 0);
 signal jump: std_logic;
 signal real_new_pc: std_logic_vector(31 downto 0);
-signal result1: std_logic_vector(31 downto 0):= x"00000000";
-signal result2: std_logic_vector(31 downto 0):= x"00000000";
+--signal result1: std_logic_vector(31 downto 0):= x"00000000";
+--signal result2: std_logic_vector(31 downto 0):= x"00000000";
 signal index: std_logic_vector(7 downto 0);
 signal value: std_logic_vector(7 downto 0);
 signal configuration_mode: std_logic_vector(1 downto 0):="00";
 signal ifHalt: std_logic:='0';
-signal runningFlag: std_logic:='0';
+--signal runningFlag: std_logic:='0';
 signal interupt: std_logic:='0';
 signal clr: std_logic:= '0';
 TYPE StateType IS( initial_state, pressing_state, running_state, interupt_state);
@@ -489,18 +489,18 @@ with Val select
 HexVal <= op & op & op & op;
               
 --display rc5 result
-display:process(clk)
-begin
-if rising_edge(clk) then
-    if MemWrite = '1' then
-        if ALUResult = x"00000020" then
-            result1 <= WriteData;
-        elsif  ALUResult = x"00000021" then
-            result2 <= WriteData;
-        end if;
-    end if;
-end if;
-end process;
+--display:process(clk)
+--begin
+--if rising_edge(clk) then
+--    if MemWrite = '1' then
+--        if ALUResult = x"00000020" then
+--            result1 <= WriteData;
+--        elsif  ALUResult = x"00000021" then
+--            result2 <= WriteData;
+--        end if;
+--    end if;
+--end if;
+--end process;
 
 
 --Trying to display ABCD on the 7segment display by first sending it to 
