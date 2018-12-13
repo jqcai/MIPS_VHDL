@@ -1,0 +1,232 @@
+--  r0  =  0
+--  r1  =  i
+--  r2  =  j
+--  r3  =  k
+--  r4  =  4
+--  r5  =  25
+--  r6  =  p  =  0xb7e15163
+--  r7  =  q  =  0x9e3779b9
+--  r8  =  78
+--  r9  =  A
+--  r10  =  B
+--  A  cipher  text  =  e012e645
+--  B  cipher  text  =  ca838fab
+
+-- mem 0-103 = S[0-25]
+-- mem 104-107 = P
+-- mem 108-111 = Q
+-- mem 128-131 = input1
+-- mem 132-135 = input2
+-- mem 136-151 = L
+
+
+
+sub r0,r0,r0
+sub r4,r4,r4
+addi r4,r4,4
+sub r5,r5,r5
+addi r5,r5,25
+sub r6,r6,r6
+sub r9,r9,r9
+sub r10,r10,r10
+
+
+--set register r11-r17 to zero
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+
+
+--set r17 as counter to record the first index of  A
+addi  r17,r17,32
+SHR  r17,r11,30
+
+--load A by byte and add them up to r9
+LB  r11,r12,0    
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0
+ADD  r12,r13,r9
+ADD  r9,r14,r9
+ADD  r9,r15,r9  
+
+--load B by byte and add them up to r10
+addi  r11,r11,1  
+LB  r11,r12,0    
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0
+ADD  r12,r13,r10
+ADD  r10,r14,r10
+ADD  r10,r15,r10
+
+--r11  -  r15  =  0
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+
+SHR r1,r11,30
+LB  r11,r12,0		--load S[0]   
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		--end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12  	--r12  =  S[0]
+ADD  r9,r12,r9  	--A  =  A  +  S[0]
+
+addi r1,r1,1
+SHR r1,r11,30
+LB  r11,r12,0    	--load S[1]
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		--end load	
+ADD  r12,r13,r12	
+ADD  r12,r14,r12
+ADD  r12,r15,r12  	--r12  =  S[1]
+ADD  r10,r12,r10  	--B  =  B  + S[1]
+
+
+--r12 -  r22  =  0
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+sub  r18,r18,r18
+sub  r19,r19,r19
+sub  r20,r20,r20
+sub  r21,r21,r21
+--r22 = 32
+sub  r22,r22,r22
+addi r22,r22,32
+
+--A xor B
+NOR  r9,r9,r18
+NOR  r10,r10,r19
+NOR  r18,r19,r20
+NOR  r9,r10,r21
+NOR  r20,r21,R16		--r16 = A xor B
+
+-- r16 =  ((A xor B)<<<B))
+ANDI R10,R17,31  	--r17  =  last 5 bits of B 
+SUB r22,r17,r17		
+BEQ  r17,r0,3
+SHR  r16,r16,1
+SUBI  r17,r17,1
+JMP 	100			--jump back to beq   			
+	
+
+addi r1,r1,1		--r1 = 2i
+SHR r1,r11,30	
+	
+LB  r11,r12,0  		--load S[2i]  
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		-- end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12	--r12  =  S[2i]
+
+--A = ((A xor B) <<< B) + S[2×i]
+ADD r16,r12,r9
+
+--r12 -  r22  =  0
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+sub  r18,r18,r18
+sub  r19,r19,r19
+sub  r20,r20,r20
+sub  r21,r21,r21
+
+--B xor A
+NOR  r9,r9,r18
+NOR  r10,r10,r19
+NOR  r18,r19,r20
+NOR  r9,r10,r21
+NOR  r20,r21,R16		--r16 = B xor A
+
+-- r16 =  ((B xor A)<<<A))
+ANDI R9,R17,31  	--r17  =  last 5 bits of A 
+SUB r22,r17,r17		
+BEQ  r17,r0,3
+SHR  r16,r16,1
+SUBI  r17,r17,1
+JMP 	137			--jump back to beq   			
+	
+addi r1,r1,1		--r1 = 2i+1
+SHR r1,r11,30	
+
+LB  r11,r12,0  		--load S[2i+1]  
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		-- end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12	--r12  =  S[2i+1]
+
+--B = ((B xor A) <<< A) + S[2×i + 1];
+ADD r16,r12,r10
+
+BNE r1,r5,	-65	--jump back to A xor B
+
+
+-- store A and B in memory	128-135
+sub  r11,r11,r11
+shr  r9,r9,24
+sb  r11,r9,128
+addi  r11,r11,1
+blt  r11,r4,-4
+sub  r11,r11,r11
+shr  r10,r10,24
+sb  r11,r10,132
+addi  r11,r11,1
+blt  r11,r4,-4
+hal

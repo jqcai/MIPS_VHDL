@@ -1,0 +1,232 @@
+--  r0  =  0
+--  r1  =  i
+--  r2  =  j
+--  r3  =  k
+--  r4  =  4
+--  r5  =  25
+--  r6  =  p  =  0xb7e15163
+--  r7  =  q  =  0x9e3779b9
+--  r8  =  78
+--  r9  =  A
+--  r10  =  B
+--  A  cipher  text  =  e012e645
+--  B  cipher  text  =  ca838fab
+
+-- mem 0-103 = S[0-25]
+-- mem 104-107 = P
+-- mem 108-111 = Q
+-- mem 128-131 = input1
+-- mem 132-135 = input2
+-- mem 136-151 = L
+
+
+--000
+sub r0,r0,r0
+and r4,r4,r4
+addi r4,r4,4
+sub r5,r5,r5
+addi r5,r5,25
+sub r6,r6,r6
+sub r9,r9,r9
+sub r10,r10,r10
+
+--set register r11-r17 to zero
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+
+--set r17 as counter to record the first index of cipher text of A
+addi  r17,r17,32
+SHR  r17,r11,30
+
+--load cipher text of A by byte and add them up to r9
+LB  r11,r12,0    
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0
+ADD  r12,r13,r9
+ADD  r9,r14,r9
+ADD  r9,r15,r9  
+
+--load cipher text of B by byte and add them up to r9
+addi  r11,r11,1  
+LB  r11,r12,0    
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0
+ADD  r12,r13,r10
+ADD  r10,r14,r10
+ADD  r10,r15,r10
+
+
+--r11  -  r21  =  0
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+sub  r18,r18,r18
+sub  r19,r19,r19
+sub  r20,r20,r20
+sub  r21,r21,r21
+--
+
+SHR  r5,r11,30		--get the index(2i+1) in r11
+LB  r11,r12,0    	--load S[2i+1] 
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		-- end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12  	--r12  =  S[2i+1]
+SUB  r10,r12,r16  	--r16  =  B  -  S[2i+1]
+
+-- r16 =  (B  -  S[2i+1]) >> A
+ANDI  R9,R17,31  	--r17  =  last 5 bits of A
+BEQ  r17,r0,3
+SHR  r16,r16,1
+SUBI  r17,r17,1
+JMP  72 			-- jump back to BEQ as loop
+
+--r16  xor  A
+NOR  r16,r16,r18
+NOR  r9,r9,r19
+NOR  r18,r19,r20
+NOR  r16,r9,r21
+NOR  r20,r21,R10	-- store B = ((B - S[2×i +1]) >>> A) xor A in r10
+
+SUBI  r5,r5,1    --r5  =  2i
+
+--r11  -  r21  =  0
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+sub  r16,r16,r16
+sub  r17,r17,r17
+sub  r18,r18,r18
+sub  r19,r19,r19
+sub  r20,r20,r20
+sub  r21,r21,r21
+
+SHR  r5,r11,30		--get the index(2i) in r11  
+LB  r11,r12,0  		--load S[2i+1]  
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		-- end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12	--r12  =  S[2i]
+SUB  r9,r12,r16     --r16  =  A  -  S[2i]
+
+-- r17 =  ((A - S[2×i]) >>> B)
+ANDI  R10,R17,31  --r17  =  last  5  bits  of  B
+BEQ  r17,r0,3  
+SHR  r16,r16,1
+SUBI  r17,r17,1
+JMP  109  --jump  back  to  BEQ
+
+--r16  xor  B
+
+NOR  r16,r16,r18
+NOR  r10,r10,r19
+NOR  r18,r19,r20
+NOR  r16,r10,r21
+NOR  r20,r21,R9		--store A = ((A - S[2×i]) >>> B) xor B in r9
+
+SUBI  r5,r5,1
+SUB  r11,r11,r11
+ADDI  r11,r11,1  
+BNE  r5,r11,67108798  --  jump  back  to  first  SHR  r5,r11,30  to loop   -66  1000010  0111101  0111110
+
+--r11  -  r15  =  0
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+
+
+SHR  r5,r11,30  	
+LB  r11,r12,0    	--load S[1]
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		--end load	
+ADD  r12,r13,r12	
+ADD  r12,r14,r12
+ADD  r12,r15,r12  	--r12  =  S[1]
+SUB  r10,r12,r10  	--B  =  B  -  S[1]
+
+--r11  -  r15  =  0
+sub  r11,r11,r11
+sub  r12,r12,r12
+sub  r13,r13,r13
+sub  r14,r14,r14
+sub  r15,r15,r15
+
+SUBI  r5,r5,1
+SHR  r5,r11,30  
+LB  r11,r12,0		--load S[0]   
+SHR  r12,r12,8
+ADDI  r11,r11,1
+LB  r11,r13,0
+SHR  r13,r13,16
+ADDI  r11,r11,1
+LB  r11,r14,0
+SHR  r14,r14,24
+ADDI  r11,r11,1
+LB  r11,r15,0		--end load
+ADD  r12,r13,r12
+ADD  r12,r14,r12
+ADD  r12,r15,r12  	--r12  =  S[0]
+SUB  r9,r12,r9  	--A  =  A  -  S[0]
+	
+-- store A and B in memory	128-135
+sub  r11,r11,r11
+shr  r9,r9,24
+sb  r11,r9,128
+addi  r11,r11,1
+blt  r11,r4,-4
+sub  r11,r11,r11
+shr  r10,r10,24
+sb  r11,r10,132
+addi  r11,r11,1
+blt  r11,r4,-4
+hal

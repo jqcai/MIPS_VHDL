@@ -1,0 +1,180 @@
+# mem 0-103 = S[0-25]
+# mem 104-107 = P
+# mem 108-111 = Q
+# mem 112-115 = A
+# mem 116-119 = B
+# mem 128-131 = input1
+# mem 132-135 = input2
+# mem 136-151 = L
+# mem 152 -out1
+# mem 156 - out2
+
+
+# r0   =   0
+# r1   =   i
+# r2   =   j
+# r3   =   k
+# r4  =   4
+# r5 = 25
+# r6 = p = 0xb7e15163
+# r7 = q = 0x9e3779b9
+# r8 = 78
+# r9 = Aza
+# r10 = B
+
+sub		r0, r0, r0		# r0 = 0
+sub		r4, r4, r4		# r4 = r4 - r4
+addi	r4, r4, 4		# r4 = r4 + 4
+sub		r5, r5, r5		# r5 = r5 - r5
+addi	r5, r5, 25		# r5 = r5 + 25
+sub		r8, r8, r8		# r8 = r8 - r8
+addi	r8, r8, 78		# r8 = r8 + 78
+
+# L is already in data memory
+
+# load P, Q
+# P
+sub     r1, r1, r1      # i = 0
+sub     r6, r6, r6      # r6 = 0
+# loop load p
+shr     r6, r6, 24      # r6 << 8
+lb		r1, r21, 104    # r21 = mem[r1 + 104]
+add     r6, r21, r6     # r6 = r21 + r6
+addi    r1, r1, 1       # i++
+blt     r1, r4, -5      # i < 4 then loop load p
+# Q
+sub     r1, r1, r1      # i = 0
+sub     r7, r7, r7      # r7 = 0
+# loop load q
+shr     r7, r7, 24      # r7 << 8
+lb		r1, r21, 108    # r21 = mem[r1 + 108]
+add     r7, r21, r7     # r6 = r21 + r6
+addi    r1, r1, 1       # i++
+blt     r1, r4, -5      # i < 4 then loop load p
+
+
+# initial S[]
+sub		r1, r1, r1		    # i = 0
+and     r0, r24, r24                
+addi    r24, r24, 103       # r24 = 103, end flag of loop
+or      r0, r6, r21         # r21 = r6 = p
+
+# loop init S
+sub     r2, r2, r2          
+addi    r2, r2, 4           # j = 4
+or      r0, r21, r22        # r22 = r21
+
+# loop init S[i]
+subi    r2, r2, 1           # j = j - 1, start from j = 3
+add     r1, r2, r23         # r23 = i + j
+sb		r23, r22, 0         # save last byte of r22 into mem[i+j]
+shr     r22, r22, 8
+bne     r0, r2, -5          # if j != 0, loop init S[i]
+
+add     r21, r7, r21        # S[i] = S[i-1] + Q
+addi    r1, r1, 4           # i += 4
+blt     r1, r24, -11        # if i < 103, loop init S
+
+
+# the main key scheduling loop
+#init
+sub     r1, r1, r1          # i = 0
+sub     r2, r2, r2          # j = 0
+sub     r3, r3, r3          # k = 0, do 78 times
+sub     r9, r9, r9          # a = 0
+sub     r10, r10, r10       # b = 0
+sub     r21, r21, r21       # r21 = 0, inner loop var
+
+# loop 78:
+
+# A = S[i] = (S[i] + A + B) <<< 3
+# load s[i] to r22
+sub     r22, r22, r22       # r22 = 0
+sub     r23, r23, r23       # r23 = 0
+shr     r1, r24, 30         # r24 = 4 * i
+add     r0, r24, r21        # r21 = 4 * i
+addi    r24, r24, 4         # r24 = 4 * i + 4
+
+# loop load s[i]
+shr     r22, r22, 24        # r22 << 8
+lb		r21, r23, 0         # r23 = mem[r21 + 0]
+add     r22, r23, r22       # r22 = r22 + r23
+addi    r21, r21, 1         # r21 ++
+blt     r21, r24, -5        # r21 < 4*i+4 then loop load s[i]
+# r22 = s[i]
+
+# update A
+add r9, r10, r9             # A = A + B
+add r9, r22, r9             # A = A + B + S[i]
+shr r9, r9, 29              # A = (A + B + s[i]) <<< 3
+or  r0, r9, r22             # S[i] = A
+
+# save A to s[i]
+shr     r1, r24, 30         # r24 = 4 * i
+or      r0, r24, r21        # r21 = 4 * i
+addi    r24, r24, 4         # r24 = 4 * i + 4
+# loop save s[i]
+shr     r22, r22, 24        # r22 << 8
+sb		r21, r22, 0         # mem[r21 + 0] = r22 last byte
+addi    r21, r21, 1         # r21 ++
+blt     r21, r24, -4        # r21 < 4*i+4 then l oop save s[i]
+
+# B = L[j] = (L[j] + A + B) <<< (A + B)
+# load L[j] to r22
+sub     r22, r22, r22       # r22 = 0
+sub     r23, r23, r23       # r23 = 0
+shr     r2, r24, 30         # r24 = 4 * j
+or      r0, r24, r21        # r21 = 4 * j
+addi    r24, r24, 4         # r24 = 4 * j + 4
+
+# loop load L[j]
+shr     r22, r22, 24        # r22 << 8
+lb		r21, r23, 136       # r23 = mem[r21 + 136], L starts at 136
+add     r22, r23, r22       # r22 = r22 + r23
+addi    r21, r21, 1         # r21 ++
+blt     r21, r24, -5        # r21 < 4*j+4, then loop load L[j]
+# r22 = L[j]
+
+# update B
+add r9, r10, r10            # B = A + B
+or r0, r10, r23             # r23 = ( (A + B) | 0) = A + B
+andi r23, r23, 31           # last 5 bit of r23, for len(Rn) = 32 (0-31)
+add r10, r22, r10           # B = A + B + L[j]
+sub r0, r23, r23
+addi r23, r23, 32           # r23 = 32 - r23 (1-32), right shift time
+# loop shift right
+shr r10, r10, 1             # r10 >>> 1
+subi r23, r23, 1            # r23--
+bne r23, r0, -3             # if r23 != 0 then loop shift right
+# B = (L[j] + A + B) <<< (A + B)
+or  r0, r10, r22            # L[j] = B
+
+# save B to L[j]
+shr     r2, r24, 30         # r24 = 4 * j
+or      r0, r24, r21        # r21 = 4 * j
+addi    r24, r24, 4         # r24 = 4 * j + 4, loop end flag
+# loop save L[j]
+shr     r22, r22, 24        # r22 << 8
+sb		r21, r22, 136       # mem[r21 + 136] = last byte of r22
+addi    r21, r21, 1         # r21 ++
+blt     r21, r24, -4        # r21 < 4*j+4 then loop save s[i]
+
+bne r1, r5, 1           # run if i = 25
+subi r1, r1, 26         # i = i - 26
+addi r1, r1, 1          # i = i + 1
+
+addi r2, r2, 1          # j = j + 1
+andi r2, r2, 3          # j = j % c, which is (j % 4)
+addi r3, r3, 1          # k = k + 1
+bne r3, r8, -55         # jump to loop 78
+# bne r3, r8, -34
+# hal
+jmp 97
+
+
+
+
+
+
+
+
