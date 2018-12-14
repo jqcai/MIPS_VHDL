@@ -20,7 +20,7 @@
 -- mem 136-151 = L
 
 
-
+sub r1, r1, r1
 sub r0,r0,r0
 sub r4,r4,r4
 addi r4,r4,4
@@ -145,7 +145,7 @@ SUB r22,r17,r17
 BEQ  r17,r0,3
 SHR  r16,r16,1
 SUBI  r17,r17,1
-JMP 	100			--jump back to beq   			
+JMP 	101			--jump back to beq   			
 	
 
 addi r1,r1,1		--r1 = 2i
@@ -193,7 +193,7 @@ SUB r22,r17,r17
 BEQ  r17,r0,3
 SHR  r16,r16,1
 SUBI  r17,r17,1
-JMP 	137			--jump back to beq   			
+JMP 	138			--jump back to beq   			
 	
 addi r1,r1,1		--r1 = 2i+1
 SHR r1,r11,30	
