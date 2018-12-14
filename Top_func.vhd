@@ -156,6 +156,15 @@ component program_counter_adder
 	);
 end component;
 
+component debounce 
+  GENERIC(
+    counter_size  :  INTEGER := 19); --counter size (19 bits gives 10.5ms with 50MHz clock)
+  PORT(
+    clk     : IN  STD_LOGIC;  --input clock
+    button  : IN  STD_LOGIC;  --input signal to be debounced
+    result  : OUT STD_LOGIC); --debounced signal
+END component;
+
 type arr is array(0 to 22) of std_logic_vector(7 downto 0);
 signal NAME: arr;
 signal Val : std_logic_vector(3 downto 0) := (others => '0');
@@ -200,10 +209,11 @@ signal interupt: std_logic:='0';
 signal clr: std_logic:= '0';
 TYPE StateType IS( initial_state, pressing_state, running_state, interupt_state);
 signal state : StateType;
+signal debounce_C,debounce_U,debounce_L,debounce_R,debounce_D:  std_logic;
 
 begin
 --TODO
-clr <= interupt or btnC;
+clr <= interupt or debounce_C;
 --process(clk, clr)
 --begin
 --    if clr ='1' then
@@ -212,9 +222,9 @@ clr <= interupt or btnC;
 --        pc <= pc_next;
 --    end if;
 --end process;
-process(clk,btnL,btnD,btnR,btnC,ifHalt)
+process(clk,debounce_L,debounce_D,debounce_R,debounce_C,ifHalt)
     begin
-        if btnC = '1'  then
+        if debounce_C = '1'  then
             state <= initial_state;
         ELSIF(clk'EVENT AND clk='1') THEN
             case state IS
@@ -222,26 +232,26 @@ process(clk,btnL,btnD,btnR,btnC,ifHalt)
                     pc <= x"00000000";
                     configuration_mode<="00";
                     interupt <= '0';
-                    if  btnL='1' Then
+                    if  debounce_L='1' Then
                         state <= pressing_state;
                         configuration_mode<="01";                
-                    elsif btnR = '1' Then
+                    elsif debounce_R = '1' Then
                         state <= pressing_state;
                         configuration_mode<="11";
-                    elsif btnD = '1' Then 
+                    elsif debounce_D = '1' Then 
                         state <= pressing_state; 
                         configuration_mode<="10";
                     End if;
                 When pressing_state =>
                     interupt <= '0';
-                    if btnL = '0' and btnR = '0' and btnD = '0' then
+                    if debounce_L = '0' and debounce_R = '0' and debounce_D= '0' then
                         state <= running_state;
                     end if;
                 When running_state => 
                     pc <= pc_next;
                     interupt <= '0';
                     if ifHalt = '1' then state <= initial_state; 
-                    elsif (btnL = '1' or btnR = '1' or btnD = '1') Then state <= interupt_state;
+                    elsif (debounce_L = '1' or debounce_R = '1' or debounce_D = '1') Then state <= interupt_state;
                     End if;
                 When interupt_state => 
                     interupt<='1';
@@ -316,6 +326,37 @@ value <= sw(15 downto 8);
 
 
 
+debounce_portmap_C: entity work.debounce
+    port map(
+    clk => clk,
+    button => btnC, --input signal to be debounced
+    result => debounce_C
+); --debounced signal
+debounce_portmap_L: entity work.debounce
+    port map(
+    clk => clk,
+    button => btnL, --input signal to be debounced
+    result => debounce_L
+); --debounced signal
+debounce_portmap_R: entity work.debounce
+    port map(
+    clk => clk,
+    button => btnR, --input signal to be debounced
+    result => debounce_R
+); --debounced signal
+debounce_portmap_D: entity work.debounce
+    port map(
+    clk => clk,
+    button => btnD, --input signal to be debounced
+    result => debounce_D
+); --debounced signal
+debounce_portmap_U: entity work.debounce
+    port map(
+    clk => clk,
+    button => btnU, --input signal to be debounced
+    result => debounce_U
+); --debounced signal
+
 Instruction_Mem: entity work.instruction_memory
     port map
     (
@@ -375,7 +416,7 @@ Sign_Extend: entity work.SignExtend
 Data_Mem_port_map: entity work.DATA_MEM
     port map(
 --        sw => SW,
-        btnU => btnU,
+        btnU => debounce_U,
         clr => clr,
         index => index,
         value => value,
@@ -406,9 +447,9 @@ mux_port_map: entity work.mux
             mux_in1 => PCBranch_sig,
             mux_in2 =>  real_new_pc, 
             mux_sel =>  PCSrc,
-            btnL => btnL,
-            btnR => btnR,
-            btnD => btnD,
+            btnL => debounce_L,
+            btnR => debounce_R,
+            btnD => debounce_D,
             mux_out => PC_next
     );
 
