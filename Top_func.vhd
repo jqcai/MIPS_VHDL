@@ -255,8 +255,10 @@ process(clk,debounce_L,debounce_D,debounce_R,debounce_C,ifHalt)
                     End if;
                 When interupt_state => 
                     interupt<='1';
-                    state <= initial_state;
                     configuration_mode<="00";
+                    if debounce_L = '0' and debounce_R = '0' and debounce_D= '0' then
+                        state <= initial_state;
+                    end if;
             end case;
         end if;
 end process;
