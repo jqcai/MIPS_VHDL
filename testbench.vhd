@@ -32,10 +32,10 @@ USE	STD.TEXTIO.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity testbench1 is
-end testbench1;
+entity testbench is
+end testbench;
 
-architecture Behavioral of testbench1 is
+architecture Behavioral of testbench is
 
 COMPONENT Top_func
 port(
