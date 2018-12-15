@@ -168,8 +168,8 @@ andi r2, r2, 3          # j = j % c, which is (j % 4)
 addi r3, r3, 1          # k = k + 1
 bne r3, r8, -55         # jump to loop 78
 # bne r3, r8, -34
-# hal
-jmp 97
+hal
+# jmp 97
 
 
 
